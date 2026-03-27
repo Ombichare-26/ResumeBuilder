@@ -1,0 +1,1 @@
+//server.js -> Loads .env -> connectDB() -> imports app.js -> (app.js sets routes + middleware) -> server starts listening
