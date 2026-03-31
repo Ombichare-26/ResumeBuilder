@@ -5,23 +5,30 @@ const resumeSchema = new mongoose.Schema(
         userId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
-            required: true,
         },
 
-        filePath: {
-            type: String,
-            required: true,
-        },
-
-        text: {
-            type: String,
-        },
+        filePath: String,
+        text: String,
 
         skills: [String],
 
-        experience: [String],
+        experience: [
+            {
 
-        projects: [String],
+                role: String,
+                company: String,
+                duration: String,
+                description: String,
+            },
+        ],
+
+        projects: [
+            {
+                name: String,
+                technologies: [String],
+                description: String,
+            },
+        ],
 
         achievements: [String],
 
