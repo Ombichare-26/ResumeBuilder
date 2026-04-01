@@ -2,6 +2,14 @@ import mongoose from "mongoose";
 
 const jdSchema = new mongoose.Schema(
     {
+        userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+        },
+        targetRole: {
+            type: String,
+        },
         content: {
             type: String,
             required: true,
@@ -9,6 +17,7 @@ const jdSchema = new mongoose.Schema(
 
         skills: [String],
     },
+
     { timestamps: true }
 );
 

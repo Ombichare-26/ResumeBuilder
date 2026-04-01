@@ -1,4 +1,6 @@
 fastapi
 uvicorn
-spacy
+pydantic
 python-multipart
+spacy==3.7.5
+gliner==0.2.26        

@@ -6,6 +6,7 @@ import cookieParser from "cookie-parser";
 // Routes
 import authRoutes from "./routes/authRoutes.js";
 import resumeRoutes from "./routes/resumeRoutes.js";
+import jdRoutes from "./routes/jdRoutes.js";
 // import matchRoutes from "./routes/matchRoutes.js";
 
 const app = express();
@@ -22,6 +23,7 @@ app.use(cookieParser());
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/resume", resumeRoutes);
+app.use("/api/jd", jdRoutes);
 // app.use("/api/match", matchRoutes);
 
 // Health check
