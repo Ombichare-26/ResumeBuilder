@@ -16,6 +16,25 @@ const jdSchema = new mongoose.Schema(
         },
 
         skills: [String],
+
+        summary: {
+            type: String,
+        },
+
+        requiredSkills: [
+            {
+                category: String,
+                details: [String]
+            }
+        ],
+
+        recommendedProjects: [
+            {
+                name: String,
+                description: String,
+                ideaSource: String,
+            }
+        ],
     },
 
     { timestamps: true }
