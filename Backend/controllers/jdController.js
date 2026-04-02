@@ -11,13 +11,15 @@ export const uploadJobDescription = async (req, res) => {
 
         // Pass JD text to FastAPI to leverage our parsing engine to extract skills automatically
         const extracted = await extractFromFastAPI(content);
+        const skillsData = extracted.skills || {};
+        const formattedSkills = skillsData.all || (Array.isArray(skillsData) ? skillsData : []);
 
         // Store in DB, ensuring userId matches identically to Resume setup
         const jd = await JobDescription.create({
             userId: req.user,  // Extracted from authMiddleware
             targetRole,
             content,
-            skills: extracted.skills || [],
+            skills: formattedSkills,
         });
 
         res.status(201).json({

@@ -19,21 +19,46 @@ export const uploadResume = async (req, res) => {
         // 🔹 Step 2: Send to FastAPI
         const extracted = await extractFromFastAPI(text);
 
+        // Map FastAPI data back to Mongoose schema
+        const skillsData = extracted.skills || {};
+        const formattedSkills = skillsData.all || (Array.isArray(skillsData) ? skillsData : []);
+        
+        const formattedExperience = (extracted.experience || []).map(exp => ({
+            role: exp.role || "",
+            company: exp.company || "",
+            duration: exp.duration || "",
+            description: Array.isArray(exp.description) ? exp.description.join("\n") : (exp.description || ""),
+        }));
+
+        const formattedProjects = (extracted.projects || []).map(proj => ({
+            name: proj.name || "",
+            technologies: proj.technologies || [],
+            description: Array.isArray(proj.description) ? proj.description.join("\n") : (proj.description || ""),
+        }));
+
+        const formattedAchievements = (extracted.achievements || []).map(ach => 
+            ach.title ? ach.title : (typeof ach === "string" ? ach : JSON.stringify(ach))
+        );
+
+        const formattedCertifications = (extracted.certifications || []).map(cert => 
+            cert.name ? cert.name : (typeof cert === "string" ? cert : JSON.stringify(cert))
+        );
+
         // 🔹 Step 3: Save to DB (match schema)
         const resume = await Resume.create({
             userId: req.user,
             filePath,
             text,
 
-            skills: extracted.skills || [],
+            skills: formattedSkills,
 
-            experience: extracted.experience || [],
+            experience: formattedExperience,
 
-            projects: extracted.projects || [],
+            projects: formattedProjects,
 
-            achievements: extracted.achievements || [],
+            achievements: formattedAchievements,
 
-            certifications: extracted.certifications || [],
+            certifications: formattedCertifications,
         });
 
         // Cleanup physical file
