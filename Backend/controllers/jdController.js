@@ -27,6 +27,7 @@ export const uploadJobDescription = async (req, res) => {
             
             summary: aiInsights.summary,
             requiredSkills: aiInsights.requiredSkills,
+            requiredTools: aiInsights.requiredTools,
             recommendedProjects: aiInsights.recommendedProjects,
         });
 

@@ -16,6 +16,7 @@ const jdSchema = new mongoose.Schema(
         },
 
         skills: [String],
+        requiredTools: [String],
 
         summary: {
             type: String,
