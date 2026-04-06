@@ -22,7 +22,7 @@ export const uploadResume = async (req, res) => {
         // Map FastAPI data back to Mongoose schema
         const skillsData = extracted.skills || {};
         const formattedSkills = skillsData.all || (Array.isArray(skillsData) ? skillsData : []);
-        
+
         const formattedExperience = (extracted.experience || []).map(exp => ({
             role: exp.role || "",
             company: exp.company || "",
@@ -36,11 +36,11 @@ export const uploadResume = async (req, res) => {
             description: Array.isArray(proj.description) ? proj.description.join("\n") : (proj.description || ""),
         }));
 
-        const formattedAchievements = (extracted.achievements || []).map(ach => 
+        const formattedAchievements = (extracted.achievements || []).map(ach =>
             ach.title ? ach.title : (typeof ach === "string" ? ach : JSON.stringify(ach))
         );
 
-        const formattedCertifications = (extracted.certifications || []).map(cert => 
+        const formattedCertifications = (extracted.certifications || []).map(cert =>
             cert.name ? cert.name : (typeof cert === "string" ? cert : JSON.stringify(cert))
         );
 

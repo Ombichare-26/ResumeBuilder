@@ -11,7 +11,7 @@ print("Models loaded successfully.")
 # Define possible Section Headings (Hybrid approach)
 SECTION_KEYWORDS = {
     "experience": ["experience", "employment", "work history", "professional experience"],
-    "projects": ["projects", "project work", "academic projects", "personal projects", "portfolio"],
+    "projects": ["projects", "project work", "academic projects", "personal projects", "portfolio", "selected projects", "key projects", "notable projects"],
     "education": ["education", "academic background", "qualifications"],
     "skills": ["skills", "technical skills", "core competencies", "technologies"],
     "achievements": ["achievements", "awards", "honors", "accomplishments", "awards and certificates"],
@@ -37,6 +37,7 @@ def split_into_sections(text):
                          if line_lower == kw or line_lower.startswith(kw + ":") or line.isupper() or line.istitle() or kw in ["project work", "awards and certificates"]:
                              current_section = sec
                              is_heading = True
+                             print(f"--- Detected Section: {current_section} (Heading: '{line}') ---")
                              break
                  if is_heading: break
         
@@ -106,57 +107,67 @@ def extract_experience_gliner(text):
         
     return [j for j in jobs if j["role"] or j["company"] or j["description"]]
 
-def extract_projects_gliner(text):
+import json
+import requests
+
+# ... (Previous code for sections, skills, and experience remains identical)
+
+def extract_projects_llm(text):
     if not text.strip(): return []
-    labels = ["Project Title", "Technology"]
-    projects = []
-    current_proj = {"name": "", "technologies": [], "description": ""}
     
-    lines = [line.strip() for line in text.split("\n") if line.strip()]
     
-    for line in lines:
-        is_bullet = bool(re.match(r'^[^a-zA-Z0-9]*[-•*·]', line))
-        clean_text = re.sub(r'^[^a-zA-Z0-9]*[-•*·]\s*', '', line)
+    prompt = f"""You are an expert Resume Parser. 
+Extract ALL projects from the following text into a structured JSON list.
+For each project, identify:
+1. "name": The clear title of the project.
+2. "technologies": Mentioned all tools/languages mentioned in that project.
+3. "description": A concise summary of what was built and achieved.
+
+If no projects are found, return an empty list [].
+
+TEXT TO PARSE:
+\"\"\"
+{text}
+\"\"\"
+
+RESPONSE FORMAT (JSON ONLY, NO EXTRA TEXT):
+[
+  {{
+    "name": "Project Name",
+    "technologies": ["Tech1", "Tech2"],
+    "description": "Project description..."
+  }}
+]"""
+
+    try:
+        response = requests.post("http://localhost:11434/api/generate", json={
+            "model": "llama3",
+            "prompt": prompt,
+            "stream": False,
+            "format": "json"
+        }, timeout=60)
         
-        projs = []
-        if ":" in clean_text:
-            parts = clean_text.split(":", 1)
-            if len(parts[0].split()) <= 10:
-                projs.append(parts[0].strip())
-                clean_text = parts[1].strip()
+        if response.status_code == 200:
+            result = response.json()
+            raw_response = result.get("response", "[]").strip()
+            print(f"--- Raw Ollama Projects Response: ---\n{raw_response}\n--- End Response ---")
+            
+            projects_data = json.loads(raw_response)
+            
+            # Use data directly if it's a list, otherwise look for 'projects' key
+            if isinstance(projects_data, list):
+                return projects_data
+            elif isinstance(projects_data, dict):
+                if "projects" in projects_data:
+                    return projects_data["projects"]
+                # Sometimes LLM returns {"0": {...}, "1": {...}} or similar
+                # Just return an empty list if we can't find a clear list
+                return []
                 
-        if not projs:
-            entities = model.predict_entities(line, labels) if len(line.split()) < 25 else []
-            projs = [e["text"] for e in entities if e["label"] == "Project Title"]
-            techs = [e["text"] for e in entities if e["label"] == "Technology"]
-        else:
-            entities = model.predict_entities(clean_text, labels)
-            techs = [e["text"] for e in entities if e["label"] == "Technology"]
-            
-        is_new_proj = is_bullet and bool(projs)
-        
-        if is_new_proj:
-            if current_proj["name"] or current_proj["description"]:
-                projects.append(current_proj)
-                current_proj = {"name": "", "technologies": [], "description": ""}
-            current_proj["name"] = projs[0]
-        elif projs and not current_proj["name"]:
-            current_proj["name"] = projs[0]
-            
-        if techs:
-            current_proj["technologies"].extend(techs)
-            
-        current_proj["description"] += clean_text + " "
-            
-    if current_proj["name"] or current_proj["description"]:
-        if not current_proj["name"]: current_proj["name"] = "Untitled Project"
-        projects.append(current_proj)
-        
-    for p in projects:
-        p["technologies"] = list(set(p["technologies"]))
-        p["description"] = p["description"].strip()
-        
-    return projects
+        return []
+    except Exception as e:
+        print(f"Ollama Project Extraction Error: {e}")
+        return []
 
 def extract_simple_list(text):
     lines = text.split("\n")
@@ -169,7 +180,7 @@ def parse_resume(text):
         return {
             "skills": extract_skills_gliner(text),
             "experience": extract_experience_gliner(text),
-            "projects": extract_projects_gliner(text),
+            "projects": extract_projects_llm(text),
             "achievements": extract_simple_list(text),
             "certifications": extract_simple_list(text)
         }
@@ -177,7 +188,7 @@ def parse_resume(text):
     return {
         "skills": extract_skills_gliner(sections["skills"] + "\n" + text),
         "experience": extract_experience_gliner(sections["experience"]),
-        "projects": extract_projects_gliner(sections["projects"]),
+        "projects": extract_projects_llm(sections["projects"] if sections["projects"].strip() else text),
         "achievements": extract_simple_list(sections["achievements"]),
         "certifications": extract_simple_list(sections["certifications"]),
     }
